@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#3f3f44">
+  <title>Garansi JuaStore</title>
+
+  <style>
+    :root {
+      --bg-1: #b9b9be;
+      --bg-2: #88888e;
+      --panel: #f2f2f3;
+      --card: #ffffff;
+      --text: #202024;
+      --muted: #68686e;
+      --line: #9c9ca2;
+      --dark: #343438;
+      --success: #176b45;
+      --danger: #a92d24;
+      --shadow: 7px 7px 0 rgba(40, 40, 44, 0.45);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(
+          circle at 11px 11px,
+          rgba(255, 255, 255, 0.18) 1.4px,
+          transparent 1.5px
+        ) 0 0 / 22px 22px,
+        linear-gradient(160deg, var(--bg-1), var(--bg-2));
+    }
+
+    .wrap {
+      width: min(920px, calc(100% - 24px));
+      margin: auto;
+    }
+
+    header {
+      padding: 16px 0;
+      background: rgba(240, 240, 242, 0.94);
+      border-bottom: 2px solid #66666b;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo {
+      width: 54px;
+      height: 54px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(145deg, #55555a, #222226);
+      color: white;
+      font-size: 24px;
+      font-weight: 900;
+      box-shadow: 5px 5px 0 #929297;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    .subtitle {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    main {
+      padding: 24px 0 40px;
+    }
+
+    .hero,
+    .panel,
+    .policy {
+      border: 2px solid #74747a;
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      margin-bottom: 20px;
+      padding: 20px;
+      background: linear-gradient(145deg, #414146, #232327);
+      color: white;
+    }
+
+    .hero h2 {
+      margin: 0 0 8px;
+    }
+
+    .hero p {
+      margin: 0;
+      color: #dddddf;
+      line-height: 1.55;
+    }
+
+    .panel {
+      overflow: hidden;
+      background: var(--panel);
+    }
+
+    .panel-title {
+      padding: 15px 18px;
+      background: var(--dark);
+      color: white;
+      font-weight: 800;
+    }
+
+    form {
+      padding: 18px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    .full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 13px;
+      border: 2px solid var(--line);
+      border-radius: 12px;
+      background: var(--card);
+      color: var(--text);
+      font-size: 15px;
+      outline: none;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: #4a4a50;
+      box-shadow: 0 0 0 3px rgba(74, 74, 80, 0.12);
+    }
+
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .help {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .upload {
+      padding: 12px;
+      border: 2px dashed var(--line);
+      border-radius: 12px;
+      background: #e6e6e8;
+    }
+
+    #preview {
+      display: none;
+      width: 100%;
+      max-height: 300px;
+      object-fit: contain;
+      margin-top: 10px;
+      border-radius: 10px;
+    }
+
+    button {
+      width: 100%;
+      padding: 15px;
+      border: 0;
+      border-radius: 12px;
+      background: linear-gradient(90deg, #4c4c51, #222226);
+      color: white;
+      font-size: 15px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 4px 4px 0 #929297;
+    }
+
+    button:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+
+    #status {
+      display: none;
+      margin-top: 14px;
+      padding: 13px;
+      border-radius: 11px;
+      font-weight: 700;
+      line-height: 1.5;
+    }
+
+    #status.info {
+      display: block;
+      background: #dddddf;
+      color: #333338;
+    }
+
+    #status.success {
+      display: block;
+      background: #e9f7ef;
+      color: var(--success);
+      border: 1px solid #91c9aa;
+    }
+
+    #status.error {
+      display: block;
+      background: #fff0ee;
+      color: var(--danger);
+      border: 1px solid #e4aaa5;
+    }
+
+    .policy {
+      margin-top: 20px;
+      padding: 18px;
+      background: rgba(245, 245, 246, 0.92);
+    }
+
+    .policy h3 {
+      margin-top: 0;
+    }
+
+    .policy ul {
+      padding-left: 20px;
+      color: #525257;
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    footer {
+      padding: 22px;
+      text-align: center;
+      color: #444449;
+      font-size: 13px;
+    }
+
+    @media (max-width: 680px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .full {
+        grid-column: auto;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="wrap brand">
+      <div class="logo">JS</div>
+
+      <div>
+        <h1>Garansi JuaStore</h1>
+        <div class="subtitle">
+          Pengajuan garansi dan refund resmi
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <h2>🛡️ Form Garansi JuaStore</h2>
+
+      <p>
+        Customer cukup mengisi form di website. Pengajuan otomatis
+        masuk ke Telegram admin, lalu balasan diberikan melalui
+        nomor WhatsApp yang dicantumkan.
+      </p>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title">
+        📋 Data Pengajuan
+      </div>
+
+      <form id="warrantyForm">
+        <div class="grid">
+          <div class="field">
+            <label for="name">Nama pelanggan *</label>
+            <input id="name" required>
+          </div>
+
+          <div class="field">
+            <label for="whatsapp">Nomor WhatsApp *</label>
+
+            <input
+              id="whatsapp"
+              inputmode="numeric"
+              placeholder="6285111662004"
+              required
+            >
+
+            <div class="help">
+              Boleh diawali 08, 8, atau 62.
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="product">Nama produk *</label>
+
+            <input
+              id="product"
+              placeholder="Contoh: CapCut Pro 7 Hari"
+              required
+            >
+          </div>
+
+          <div class="field">
+            <label for="account">Email atau akun</label>
+            <input id="account">
+          </div>
+
+          <div class="field">
+            <label for="orderId">ID order</label>
+            <input id="orderId">
+          </div>
+
+          <div class="field">
+            <label for="orderDate">Tanggal order</label>
+            <input id="orderDate" type="date">
+          </div>
+
+          <div class="field">
+            <label for="duration">Durasi</label>
+
+            <input
+              id="duration"
+              placeholder="Contoh: 1 Bulan"
+            >
+          </div>
+
+          <div class="field">
+            <label for="claimType">Jenis pengajuan</label>
+
+            <select id="claimType">
+              <option value="Garansi">Garansi</option>
+              <option value="Refund">Refund</option>
+            </select>
+          </div>
+
+          <div class="field full">
+            <label for="problem">Masalah atau kendala *</label>
+            <textarea id="problem" required></textarea>
+          </div>
+
+          <div class="field full">
+            <label for="evidence">Screenshot bukti *</label>
+
+            <div class="upload">
+              <input
+                id="evidence"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                required
+              >
+
+              <div class="help">
+                JPG, PNG, atau WEBP. Maksimal 5 MB.
+              </div>
+
+              <img
+                id="preview"
+                alt="Preview screenshot"
+              >
+            </div>
+          </div>
+        </div>
+
+        <button id="submitBtn" type="submit">
+          ✈️ Kirim Pengajuan Garansi
+        </button>
+
+        <div id="status"></div>
+      </form>
+    </section>
+
+    <section class="policy">
+      <h3>Ketentuan Garansi</h3>
+
+      <ul>
+        <li>Isi data dengan benar dan lengkap.</li>
+        <li>Garansi hanya berlaku selama masa garansi aktif.</li>
+        <li>Pengajuan tanpa screenshot dapat ditolak.</li>
+        <li>Balasan dikirim melalui nomor WhatsApp yang dicantumkan.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    © <span id="year"></span> JuaStore — Apps • Games • Hosting
+  </footer>
+
+  <script>
+    /*
+      WAJIB DIGANTI setelah Worker berhasil dibuat.
+
+      Contoh:
+      const API_ENDPOINT =
+        "https://juastore-garansi-api.username.workers.dev";
+    */
+
+    const API_ENDPOINT =
+      "GANTI_DENGAN_URL_WORKER";
+
+    const form =
+      document.getElementById("warrantyForm");
+
+    const fileInput =
+      document.getElementById("evidence");
+
+    const preview =
+      document.getElementById("preview");
+
+    const statusBox =
+      document.getElementById("status");
+
+    const submitBtn =
+      document.getElementById("submitBtn");
+
+    document.getElementById("year").textContent =
+      new Date().getFullYear();
+
+    fileInput.addEventListener("change", function () {
+      const file = fileInput.files[0];
+
+      preview.style.display = "none";
+      preview.removeAttribute("src");
+
+      if (!file) {
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        fileInput.value = "";
+
+        showStatus(
+          "Ukuran screenshot maksimal 5 MB.",
+          "error"
+        );
+
+        return;
+      }
+
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = "block";
+    });
+
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      if (API_ENDPOINT.includes("GANTI_DENGAN")) {
+        showStatus(
+          "URL Worker belum dipasang di API_ENDPOINT.",
+          "error"
+        );
+
+        return;
+      }
+
+      const file = fileInput.files[0];
+
+      if (!file) {
+        showStatus(
+          "Screenshot wajib diunggah.",
+          "error"
+        );
+
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "⏳ Mengirim...";
+
+      showStatus(
+        "Mohon tunggu, pengajuan sedang dikirim.",
+        "info"
+      );
+
+      try {
+        const evidenceDataUrl =
+          await fileToDataUrl(file);
+
+        const payload = {
+          name: getValue("name"),
+          whatsapp: getValue("whatsapp"),
+          product: getValue("product"),
+          account: getValue("account"),
+          orderId: getValue("orderId"),
+          orderDate: getValue("orderDate"),
+          duration: getValue("duration"),
+          claimType: getValue("claimType"),
+          problem: getValue("problem"),
+          evidenceDataUrl: evidenceDataUrl
+        };
+
+        const response = await fetch(
+          API_ENDPOINT,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+          }
+        );
+
+        const result =
+          await response.json().catch(function () {
+            return {};
+          });
+
+        if (!response.ok || !result.success) {
+          throw new Error(
+            result.message ||
+            "Pengajuan gagal dikirim."
+          );
+        }
+
+        statusBox.className = "success";
+
+        statusBox.innerHTML =
+          "✅ Pengajuan berhasil dikirim." +
+          "<br><br>" +
+          "ID Garansi: <strong>" +
+          escapeHtml(result.warrantyId || "-") +
+          "</strong><br>" +
+          "Mohon tunggu balasan melalui WhatsApp.";
+
+        form.reset();
+
+        preview.style.display = "none";
+        preview.removeAttribute("src");
+      } catch (error) {
+        showStatus(
+          error.message ||
+          "Terjadi kesalahan. Silakan coba lagi.",
+          "error"
+        );
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent =
+          "✈️ Kirim Pengajuan Garansi";
+      }
+    });
+
+    function getValue(id) {
+      return document
+        .getElementById(id)
+        .value
+        .trim();
+    }
+
+    function fileToDataUrl(file) {
+      return new Promise(function (resolve, reject) {
+        const reader = new FileReader();
+
+        reader.onload = function () {
+          resolve(reader.result);
+        };
+
+        reader.onerror = function () {
+          reject(
+            new Error("Screenshot gagal dibaca.")
+          );
+        };
+
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function showStatus(message, type) {
+      statusBox.className = type;
+      statusBox.textContent = message;
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(
+        /[&<>"']/g,
+        function (character) {
+          const entities = {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+          };
+
+          return entities[character];
+        }
+      );
+    }
+  </script>
+</body>
+</html>
