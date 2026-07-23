@@ -1,3 +1,8 @@
 name = "juastore-garansi"
 main = "worker.js"
 compatibility_date = "2026-07-23"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "juastore-garansi-db"
+database_id = "GANTI_DENGAN_DATABASE_ID_D1"

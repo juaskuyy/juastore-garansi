@@ -1,117 +1,55 @@
-# JuaStore Garansi Final
+# JuaStore Garansi V2
 
-Paket ini sudah dipisahkan agar tidak tertukar:
+Fitur: database D1, dashboard admin, pencarian, status, catatan admin, cek status customer, export CSV, Telegram, screenshot, dan tombol WhatsApp.
 
-- `worker.js` → Cloudflare Worker
-- `wrangler.toml` → konfigurasi Cloudflare
-- `docs/index.html` → website garansi untuk GitHub Pages
+## 1. Upload semua file ke repository GitHub
 
-## 1. Upload ke GitHub
+Timpa file versi lama dengan file paket ini.
 
-Buat repository baru, lalu upload SEMUA isi ZIP ini.
+## 2. Buat D1 Database
 
-Struktur setelah upload:
+Cloudflare → Workers & Pages → D1 SQL Database → Create.
 
-```text
-JuaStore_Garansi_Final/
-├── worker.js
-├── wrangler.toml
-├── README.md
-├── .gitignore
-└── docs/
-    └── index.html
-```
+Nama:
 
-## 2. Hubungkan repository ke Cloudflare Workers
+`juastore-garansi-db`
 
-Di Cloudflare:
+Salin Database ID.
 
-1. Workers & Pages
-2. Create
-3. Import a repository
-4. Pilih repository ini
-5. Deploy
+## 3. Edit wrangler.toml
 
-Cloudflare akan membaca `wrangler.toml` dan menjalankan `worker.js`.
+Ganti:
 
-## 3. Tambahkan Variables and Secrets
+`GANTI_DENGAN_DATABASE_ID_D1`
 
-Pada Worker:
+dengan Database ID D1, lalu commit.
 
-Settings → Variables and Secrets
+## 4. Jalankan database
 
-Tambahkan:
+Buka D1 → Console → salin seluruh isi `schema.sql` → Execute.
 
-```text
-TELEGRAM_BOT_TOKEN = token baru dari BotFather
-TELEGRAM_CHAT_ID = ID Telegram admin
-ALLOWED_ORIGIN = *
-```
+## 5. Pasang binding
 
-Penting:
+Worker → Settings → Bindings → Add → D1 database:
 
-- Tekan `/start` pada bot sebelum tes.
-- Token yang pernah terlihat wajib di-revoke melalui BotFather.
-- Jangan menaruh token di `docs/index.html`.
+- Variable name: `DB`
+- Database: `juastore-garansi-db`
 
-## 4. Tes Worker
+## 6. Variables and Secrets
 
-Buka URL Worker:
+- `TELEGRAM_BOT_TOKEN` = token baru BotFather
+- `TELEGRAM_CHAT_ID` = ID admin/grup
+- `ALLOWED_ORIGIN` = `https://juastore.biz.id`
+- `ADMIN_KEY` = password rahasia dashboard
 
-```text
-https://nama-worker.username.workers.dev
-```
+Deploy ulang.
 
-Hasil yang benar:
+## 7. Alamat
 
-```json
-{"success":true,"message":"JuaStore Garansi API aktif."}
-```
+- Form: `https://juastore.biz.id`
+- Cek status: `https://juastore.biz.id/cek.html`
+- Dashboard: `https://juastore.biz.id/admin.html`
 
-## 5. Hubungkan website ke Worker
+Login dashboard menggunakan nilai `ADMIN_KEY`.
 
-Buka file:
-
-```text
-docs/index.html
-```
-
-Cari:
-
-```javascript
-const API_ENDPOINT =
-  "GANTI_DENGAN_URL_WORKER";
-```
-
-Ganti menjadi URL Worker:
-
-```javascript
-const API_ENDPOINT =
-  "https://nama-worker.username.workers.dev";
-```
-
-Commit perubahan.
-
-## 6. Aktifkan GitHub Pages
-
-Di repository GitHub:
-
-1. Settings
-2. Pages
-3. Source: Deploy from a branch
-4. Branch: `main`
-5. Folder: `/docs`
-6. Save
-
-Website akan tersedia di alamat GitHub Pages.
-
-## 7. Tes
-
-Isi form, upload screenshot, lalu klik Kirim.
-
-Hasil:
-
-- Data masuk ke Telegram admin.
-- Screenshot ikut terkirim.
-- Telegram menampilkan tombol `Balas WhatsApp`.
-- Customer tetap berada di website.
+PENTING: revoke token Telegram lama karena pernah terlihat di screenshot.
