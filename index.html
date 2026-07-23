@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#414146">
+  <title>Garansi JuaStore</title>
+  <style>
+    :root{--bg1:#b8b8bd;--bg2:#85858b;--panel:#f1f1f2;--text:#202024;--muted:#68686e;--line:#9b9ba1;--dark:#303034;--success:#176b45;--danger:#aa2a22}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:Arial,sans-serif;color:var(--text);background:linear-gradient(160deg,var(--bg1),var(--bg2))}.wrap{width:min(920px,calc(100% - 24px));margin:auto}header{padding:16px 0;background:rgba(240,240,242,.94);border-bottom:2px solid #666}.brand{display:flex;align-items:center;gap:12px}.logo{width:54px;height:54px;border-radius:14px;background:linear-gradient(145deg,#555,#222);color:#fff;display:grid;place-items:center;font-weight:900;font-size:24px}h1{font-size:22px;margin:0}.sub{font-size:13px;color:var(--muted);margin-top:3px}main{padding:24px 0 40px}.hero,.panel,.policy{border:2px solid #737379;border-radius:18px;box-shadow:7px 7px 0 rgba(40,40,44,.45)}.hero{padding:20px;background:linear-gradient(145deg,#414146,#232327);color:#fff;margin-bottom:20px}.hero h2{margin:0 0 8px}.hero p{margin:0;color:#ddd;line-height:1.5}.panel{background:var(--panel);overflow:hidden}.title{background:var(--dark);color:#fff;padding:15px 18px;font-weight:800}form{padding:18px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field{margin-bottom:14px}.full{grid-column:1/-1}label{display:block;font-weight:800;font-size:13px;margin-bottom:7px}input,select,textarea{width:100%;padding:13px;border:2px solid var(--line);border-radius:12px;background:#fff;font-size:15px;outline:none}textarea{min-height:120px;resize:vertical}.help{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.4}.upload{padding:12px;border:2px dashed var(--line);border-radius:12px;background:#e6e6e8}#preview{display:none;width:100%;max-height:300px;object-fit:contain;margin-top:10px;border-radius:10px}button{width:100%;border:0;border-radius:12px;padding:15px;background:linear-gradient(90deg,#4c4c51,#222);color:#fff;font-weight:900;font-size:15px}button:disabled{opacity:.65}#status{display:none;margin-top:14px;padding:13px;border-radius:11px;font-weight:700;line-height:1.45}#status.info{display:block;background:#ddd;color:#333}#status.success{display:block;background:#e9f7ef;color:var(--success);border:1px solid #91c9aa}#status.error{display:block;background:#fff0ee;color:var(--danger);border:1px solid #e4aaa5}.policy{margin-top:20px;padding:18px;background:rgba(245,245,246,.92)}.policy h3{margin-top:0}.policy ul{padding-left:20px;line-height:1.65;color:#525257;font-size:13px}footer{text-align:center;padding:22px;color:#444;font-size:13px}@media(max-width:680px){.grid{grid-template-columns:1fr}.full{grid-column:auto}}
+  </style>
+</head>
+<body>
+<header><div class="wrap brand"><div class="logo">JS</div><div><h1>Garansi JuaStore</h1><div class="sub">Pengajuan garansi dan refund resmi</div></div></div></header>
+<main class="wrap">
+  <section class="hero"><h2>🛡️ Form Garansi JuaStore</h2><p>Customer cukup mengisi form di website. Pengajuan otomatis masuk ke Telegram admin dan balasan diberikan melalui WhatsApp.</p></section>
+  <section class="panel"><div class="title">📋 Data Pengajuan</div><form id="form"><div class="grid">
+    <div class="field"><label>Nama pelanggan *</label><input id="name" required></div>
+    <div class="field"><label>Nomor WhatsApp *</label><input id="whatsapp" inputmode="numeric" placeholder="6285111662004" required><div class="help">Boleh diawali 08, 8, atau 62.</div></div>
+    <div class="field"><label>Nama produk *</label><input id="product" placeholder="Contoh: CapCut Pro 7 Hari" required></div>
+    <div class="field"><label>Email atau akun</label><input id="account"></div>
+    <div class="field"><label>ID order</label><input id="orderId"></div>
+    <div class="field"><label>Tanggal order</label><input id="orderDate" type="date"></div>
+    <div class="field"><label>Durasi</label><input id="duration" placeholder="Contoh: 1 Bulan"></div>
+    <div class="field"><label>Jenis pengajuan</label><select id="claimType"><option>Garansi</option><option>Refund</option></select></div>
+    <div class="field full"><label>Masalah atau kendala *</label><textarea id="problem" required></textarea></div>
+    <div class="field full"><label>Screenshot bukti *</label><div class="upload"><input id="evidence" type="file" accept="image/jpeg,image/png,image/webp" required><div class="help">JPG, PNG, atau WEBP. Maksimal 5 MB.</div><img id="preview" alt="Preview screenshot"></div></div>
+  </div><button id="submitBtn" type="submit">✈️ Kirim Pengajuan Garansi</button><div id="status"></div></form></section>
+  <section class="policy"><h3>Ketentuan</h3><ul><li>Isi data dengan benar dan lengkap.</li><li>Garansi hanya berlaku selama masa garansi masih aktif.</li><li>Pengajuan tanpa bukti screenshot dapat ditolak.</li><li>Balasan dikirim melalui nomor WhatsApp yang dicantumkan.</li></ul></section>
+</main>
+<footer>© <span id="year"></span> JuaStore — Apps • Games • Hosting</footer>
+<script>
+  const API_ENDPOINT = "GANTI_DENGAN_URL_WORKER";
+  const form=document.getElementById("form"),fileInput=document.getElementById("evidence"),preview=document.getElementById("preview"),statusBox=document.getElementById("status"),submitBtn=document.getElementById("submitBtn");
+  document.getElementById("year").textContent=new Date().getFullYear();
+  fileInput.addEventListener("change",()=>{const file=fileInput.files[0];preview.style.display="none";if(!file)return;if(file.size>5*1024*1024){fileInput.value="";showStatus("Ukuran screenshot maksimal 5 MB.","error");return}preview.src=URL.createObjectURL(file);preview.style.display="block"});
+  form.addEventListener("submit",async event=>{event.preventDefault();if(API_ENDPOINT.includes("GANTI_DENGAN")){showStatus("URL Worker belum dipasang di API_ENDPOINT.","error");return}const file=fileInput.files[0];if(!file){showStatus("Screenshot wajib diunggah.","error");return}submitBtn.disabled=true;submitBtn.textContent="⏳ Mengirim...";showStatus("Mohon tunggu, pengajuan sedang dikirim.","info");try{const evidenceDataUrl=await fileToDataUrl(file);const payload={name:value("name"),whatsapp:value("whatsapp"),product:value("product"),account:value("account"),orderId:value("orderId"),orderDate:value("orderDate"),duration:value("duration"),claimType:value("claimType"),problem:value("problem"),evidenceDataUrl};const response=await fetch(API_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});const result=await response.json().catch(()=>({}));if(!response.ok||!result.success)throw new Error(result.message||"Pengajuan gagal dikirim.");statusBox.className="success";statusBox.innerHTML=`✅ Pengajuan berhasil dikirim.<br><br>ID Garansi: <strong>${escapeHtml(result.warrantyId||"-")}</strong><br>Mohon tunggu balasan melalui WhatsApp.`;form.reset();preview.style.display="none";preview.removeAttribute("src")}catch(error){showStatus(error.message||"Terjadi kesalahan.","error")}finally{submitBtn.disabled=false;submitBtn.textContent="✈️ Kirim Pengajuan Garansi"}});
+  function value(id){return document.getElementById(id).value.trim()}function fileToDataUrl(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error("Screenshot gagal dibaca."));reader.readAsDataURL(file)})}function showStatus(message,type){statusBox.className=type;statusBox.textContent=message}function escapeHtml(value){return String(value).replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[char])}
+</script>
+</body>
+</html>
