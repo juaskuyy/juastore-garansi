@@ -52,14 +52,14 @@ Upload ke GitHub Pages:
 - `style.css`
 
 Ketiga file sudah memakai:
-`https://garansi.jhonyoga01.workers.dev`
+`https://juastore-garansi-api.jhonyoga01.workers.dev`
 
 Jika nama Worker berbeda, cari URL tersebut dan ganti di ketiga file.
 
 ## E. Tes
 
 1. Buka:
-   `https://garansi.jhonyoga01.workers.dev`
+   `https://juastore-garansi-api.jhonyoga01.workers.dev`
 
    Harus tampil JSON API aktif.
 
