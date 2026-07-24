@@ -1,4 +1,4 @@
-name = "juastore-garansi-bot"
+name = "juastore-garansi"
 main = "worker.js"
 compatibility_date = "2026-07-01"
 
