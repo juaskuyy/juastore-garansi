@@ -1,8 +1,6 @@
-name = "juastore-garansi"
+name = "juastore-garansi-bot"
 main = "worker.js"
-compatibility_date = "2026-07-23"
+compatibility_date = "2026-07-01"
 
-[[d1_databases]]
-binding = "DB"
-database_name = "juastore-garansi-db"
-database_id = "66918a8f-1dc4-414c-937b-517bdfcc2f62"
+[vars]
+ALLOWED_ORIGIN = "https://juastorepremium.biz.id"

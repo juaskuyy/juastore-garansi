@@ -1,12 +1,74 @@
-const H={"Content-Type":"application/json; charset=UTF-8"};
-export default{async fetch(req,env){const origin=req.headers.get("Origin")||"",allow=env.ALLOWED_ORIGIN||"*",cors={"Access-Control-Allow-Origin":allow==="*"?"*":(origin===allow?origin:allow),"Access-Control-Allow-Methods":"GET,POST,PATCH,DELETE,OPTIONS","Access-Control-Allow-Headers":"Content-Type,Authorization","Vary":"Origin"};if(req.method==="OPTIONS")return new Response(null,{status:204,headers:cors});const u=new URL(req.url),p=u.pathname.replace(/\/+$/,"")||"/";try{if(req.method==="GET"&&p==="/")return out({success:true,message:"JuaStore Garansi V2 API aktif."},200,cors);if(req.method==="POST"&&p==="/api/claims")return create(req,env,cors);if(req.method==="GET"&&p.startsWith("/api/status/"))return status(decodeURIComponent(p.split("/").pop()),env,cors);if(p.startsWith("/api/admin")){auth(req,env);if(req.method==="GET"&&p==="/api/admin/claims")return list(u,env,cors);if(req.method==="GET"&&p==="/api/admin/stats")return stats(env,cors);if(req.method==="PATCH"&&p.startsWith("/api/admin/claims/"))return update(decodeURIComponent(p.split("/").pop()),req,env,cors);if(req.method==="DELETE"&&p.startsWith("/api/admin/claims/"))return del(decodeURIComponent(p.split("/").pop()),env,cors)}return out({success:false,message:"Endpoint tidak ditemukan."},404,cors)}catch(e){return out({success:false,message:e.message||"Kesalahan server."},e.status||500,cors)}}};
-async function create(req,env,c){if(!env.DB)throw Error("Binding D1 DB belum dipasang.");if(!env.TELEGRAM_BOT_TOKEN||!env.TELEGRAM_CHAT_ID)throw Error("TELEGRAM_BOT_TOKEN atau TELEGRAM_CHAT_ID belum dipasang.");const b=await req.json(),name=x(b.name),wa=norm(b.whatsapp),product=x(b.product),account=x(b.account),order=x(b.orderId),date=x(b.orderDate),duration=x(b.duration),type=x(b.claimType||"Garansi"),problem=x(b.problem),img=x(b.evidenceDataUrl);if(!name||!wa||!product||!problem)return out({success:false,message:"Data wajib belum lengkap."},400,c);const id=idgen(),now=new Date().toISOString();await env.DB.prepare(`INSERT INTO claims(id,name,whatsapp,product,account,order_id,order_date,duration,claim_type,problem,status,admin_note,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind(id,name,wa,product,account,order,date,duration,type,problem,"Menunggu","",now,now).run();const text=`🛡️ <b>PENGAJUAN ${esc(type.toUpperCase())} BARU</b>\n\n🆔 <b>ID:</b> <code>${esc(id)}</code>\n👤 <b>Nama:</b> ${esc(name)}\n📱 <b>WhatsApp:</b> ${esc(wa)}\n📦 <b>Produk:</b> ${esc(product)}\n📧 <b>Email/Akun:</b> ${esc(account||"-")}\n🧾 <b>ID Order:</b> ${esc(order||"-")}\n📅 <b>Tanggal:</b> ${esc(date||"-")}\n⏳ <b>Durasi:</b> ${esc(duration||"-")}\n\n📝 <b>Kendala:</b>\n${esc(problem)}\n\n⏱️ <b>Status:</b> Menunggu`;await tg(env.TELEGRAM_BOT_TOKEN,"sendMessage",{chat_id:env.TELEGRAM_CHAT_ID,text,parse_mode:"HTML",reply_markup:{inline_keyboard:[[{text:"💬 Balas WhatsApp",url:`https://wa.me/${wa}?text=${encodeURIComponent(`Halo ${name}, pengajuan JuaStore ${id} sudah kami terima.`)}`}]]}});if(img)await photo(env.TELEGRAM_BOT_TOKEN,env.TELEGRAM_CHAT_ID,img,`Bukti screenshot\nID: ${id}`);return out({success:true,warrantyId:id,message:"Pengajuan berhasil dikirim."},200,c)}
-async function status(id,env,c){const r=await env.DB.prepare(`SELECT id,product,claim_type,status,admin_note,created_at,updated_at FROM claims WHERE id=?`).bind(id).first();return r?out({success:true,data:r},200,c):out({success:false,message:"ID garansi tidak ditemukan."},404,c)}
-async function list(u,env,c){const q=x(u.searchParams.get("q")),st=x(u.searchParams.get("status"));let sql="SELECT * FROM claims WHERE 1=1",b=[];if(q){sql+=" AND (id LIKE ? OR name LIKE ? OR whatsapp LIKE ? OR product LIKE ? OR account LIKE ? OR order_id LIKE ?)";const z=`%${q}%`;b.push(z,z,z,z,z,z)}if(st){sql+=" AND status=?";b.push(st)}sql+=" ORDER BY created_at DESC LIMIT 500";const r=await env.DB.prepare(sql).bind(...b).all();return out({success:true,data:r.results||[]},200,c)}
-async function stats(env,c){const r=await env.DB.prepare(`SELECT COUNT(*) total,SUM(CASE WHEN status='Menunggu' THEN 1 ELSE 0 END) menunggu,SUM(CASE WHEN status='Diproses' THEN 1 ELSE 0 END) diproses,SUM(CASE WHEN status='Selesai' THEN 1 ELSE 0 END) selesai,SUM(CASE WHEN date(created_at)=date('now') THEN 1 ELSE 0 END) hari_ini FROM claims`).first();return out({success:true,data:r},200,c)}
-async function update(id,req,env,c){const b=await req.json(),st=x(b.status),note=x(b.adminNote);if(!["Menunggu","Diproses","Selesai","Ditolak"].includes(st))return out({success:false,message:"Status tidak valid."},400,c);await env.DB.prepare(`UPDATE claims SET status=?,admin_note=?,updated_at=? WHERE id=?`).bind(st,note,new Date().toISOString(),id).run();return out({success:true,message:"Status diperbarui."},200,c)}
-async function del(id,env,c){await env.DB.prepare(`DELETE FROM claims WHERE id=?`).bind(id).run();return out({success:true,message:"Data dihapus."},200,c)}
-function auth(req,env){if(!env.ADMIN_KEY)throw Object.assign(Error("ADMIN_KEY belum dipasang."),{status:500});if((req.headers.get("Authorization")||"")!==`Bearer ${env.ADMIN_KEY}`)throw Object.assign(Error("Akses admin ditolak."),{status:401})}
-async function tg(t,m,p){const r=await fetch(`https://api.telegram.org/bot${t}/${m}`,{method:"POST",headers:H,body:JSON.stringify(p)}),j=await r.json();if(!r.ok||!j.ok)throw Error(j.description||"Telegram gagal.")}
-async function photo(t,c,d,cap){const m=d.match(/^data:(image\/(?:jpeg|png|webp));base64,(.+)$/);if(!m)throw Error("Format screenshot tidak valid.");const bytes=Uint8Array.from(atob(m[2]),z=>z.charCodeAt(0));const f=new FormData();f.append("chat_id",c);f.append("caption",cap);f.append("photo",new Blob([bytes],{type:m[1]}),"bukti.jpg");const r=await fetch(`https://api.telegram.org/bot${t}/sendPhoto`,{method:"POST",body:f}),j=await r.json();if(!r.ok||!j.ok)throw Error(j.description||"Foto gagal.")}
-function x(v){return v==null?"":String(v).trim()}function norm(v){let n=x(v).replace(/\D/g,"");if(n.startsWith("0"))n="62"+n.slice(1);else if(n.startsWith("8"))n="62"+n;return n}function idgen(){const d=new Date(),s=String(d.getUTCFullYear()).slice(-2)+String(d.getUTCMonth()+1).padStart(2,"0")+String(d.getUTCDate()).padStart(2,"0"),r=crypto.getRandomValues(new Uint32Array(1))[0]%10000;return `GRN-${s}-${String(r).padStart(4,"0")}`}function esc(v){return String(v).replace(/[&<>"']/g,z=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[z])}function out(d,s,c){return new Response(JSON.stringify(d),{status:s,headers:{...c,...H}})}
+export default {
+  async fetch(request, env) {
+    const cors = {
+      'Access-Control-Allow-Origin': env.ALLOWED_ORIGIN || '*',
+      'Access-Control-Allow-Methods': 'POST,OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type'
+    };
+    if (request.method === 'OPTIONS') return new Response(null,{headers:cors});
+    if (request.method !== 'POST') return json({error:'Method tidak diizinkan'},405,cors);
+
+    try {
+      const form = await request.formData();
+      const get = key => String(form.get(key) || '').trim();
+      const phone = get('customerContact').replace(/\D/g,'');
+      if (!/^62\d{8,13}$/.test(phone)) return json({error:'Nomor WhatsApp tidak valid'},400,cors);
+
+      const required = ['customerName','productName','orderId','problem'];
+      for (const key of required) if (!get(key)) return json({error:`Field ${key} wajib diisi`},400,cors);
+
+      const claimId = `GRN-${new Date().toISOString().slice(0,10).replaceAll('-','')}-${crypto.randomUUID().slice(0,6).toUpperCase()}`;
+      const text = [
+        '🛡️ <b>PENGAJUAN GARANSI BARU — JUASTORE</b>',
+        '',
+        `🆔 ID Garansi: <code>${esc(claimId)}</code>`,
+        `👤 Nama: ${esc(get('customerName'))}`,
+        `📱 WhatsApp: <code>${esc(phone)}</code>`,
+        '',
+        `📦 Produk: ${esc(get('productName'))}`,
+        `💰 Harga: Rp ${esc(get('price') || '0')}`,
+        `⏳ Durasi: ${esc(get('duration') || '-')}`,
+        `📅 Tanggal Order: ${esc(get('orderDate') || '-')}`,
+        `🧾 ID Order: ${esc(get('orderId'))}`,
+        `💳 Pembayaran: ${esc(get('payment') || '-')}`,
+        `🛡 Jenis: ${esc(get('claimType') || 'Garansi')}`,
+        '',
+        '<b>📝 Masalah / Kendala:</b>',
+        esc(get('problem')),
+        '',
+        `💬 <a href="https://wa.me/${phone}?text=${encodeURIComponent(`Halo, pengajuan garansi JuaStore ${claimId} sedang kami cek.`)}">Balas customer via WhatsApp</a>`
+      ].join('\n');
+
+      const base = `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}`;
+      const evidence = form.get('evidence');
+      let result;
+      if (evidence && typeof evidence !== 'string' && evidence.size > 0) {
+        if (evidence.size > 5 * 1024 * 1024) return json({error:'Screenshot maksimal 5 MB'},400,cors);
+        const tg = new FormData();
+        tg.append('chat_id', env.TELEGRAM_CHAT_ID);
+        tg.append('caption', text.slice(0,1024));
+        tg.append('parse_mode','HTML');
+        tg.append('photo', evidence, evidence.name || 'bukti.jpg');
+        result = await fetch(`${base}/sendPhoto`,{method:'POST',body:tg});
+      } else {
+        result = await fetch(`${base}/sendMessage`,{
+          method:'POST',headers:{'content-type':'application/json'},
+          body:JSON.stringify({chat_id:env.TELEGRAM_CHAT_ID,text,parse_mode:'HTML',disable_web_page_preview:true})
+        });
+      }
+      const tgResult = await result.json();
+      if (!tgResult.ok) throw new Error(tgResult.description || 'Telegram API gagal');
+
+      return json({ok:true,claimId},200,cors);
+    } catch (error) {
+      return json({error:'Server gagal mengirim pengajuan: '+error.message},500,cors);
+    }
+  }
+};
+
+function esc(value){
+  return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function json(data,status,headers){
+  return new Response(JSON.stringify(data),{status,headers:{...headers,'content-type':'application/json;charset=UTF-8'}});
+}
