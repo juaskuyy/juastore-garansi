@@ -1,1 +1,267 @@
-<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dashboard Admin</title><link rel="stylesheet" href="style.css"></head><body><header><div class="wrap brand"><div class="logo">JS</div><div><h2 style="margin:0">Dashboard Garansi</h2><span class="muted">Admin JuaStore</span></div><nav class="nav"><a href="index.html">Website</a><a href="cek.html">Cek Status</a></nav></div></header><main class="wrap"><section id="loginBox" class="card"><h2>🔐 Login Admin</h2><form id="login" class="toolbar"><div class="grow"><label>ADMIN_KEY</label><input id="key" type="password" required></div><button>Masuk</button></form><div id="lm" class="status"></div></section><div id="dash" style="display:none"><section class="stats"><div class="stat">Total<strong id="total">0</strong></div><div class="stat">Hari ini<strong id="today">0</strong></div><div class="stat">Menunggu<strong id="wait">0</strong></div><div class="stat">Diproses<strong id="process">0</strong></div><div class="stat">Selesai<strong id="done">0</strong></div></section><section class="card"><div class="toolbar"><div class="grow"><label>Cari</label><input id="q" placeholder="ID, nama, WA, produk"></div><div><label>Status</label><select id="filter"><option value="">Semua</option><option>Menunggu</option><option>Diproses</option><option>Selesai</option><option>Ditolak</option></select></div><button id="reload">Muat ulang</button><button id="csv" class="secondary">Export CSV</button></div></section><section class="card"><div class="tablewrap"><table><thead><tr><th>ID</th><th>Customer</th><th>Produk/Kendala</th><th>Status & Catatan</th><th>Aksi</th></tr></thead><tbody id="rows"></tbody></table></div></section></div></main><script>const API="https://garansi.jhonyoga01.workers.dev",$=x=>document.getElementById(x);let key=sessionStorage.getItem("jskey")||"",data=[];if(key)open();$("login").onsubmit=e=>{e.preventDefault();key=$("key").value.trim();sessionStorage.setItem("jskey",key);open()};$("reload").onclick=load;$("filter").onchange=load;$("q").oninput=deb(load,300);$("csv").onclick=csv;async function api(p,o={}){o.headers={...(o.headers||{}),Authorization:"Bearer "+key};const r=await fetch(API+p,o),j=await r.json();if(!r.ok||!j.success)throw Error(j.message);return j}async function open(){try{await stats();$("loginBox").style.display="none";$("dash").style.display="block";load()}catch(e){sessionStorage.removeItem("jskey");$("lm").className="status show error";$("lm").textContent=e.message}}async function stats(){const s=(await api("/api/admin/stats")).data;$("total").textContent=s.total||0;$("today").textContent=s.hari_ini||0;$("wait").textContent=s.menunggu||0;$("process").textContent=s.diproses||0;$("done").textContent=s.selesai||0}async function load(){data=(await api(`/api/admin/claims?q=${encodeURIComponent($("q").value)}&status=${encodeURIComponent($("filter").value)}`)).data;render();stats()}function render(){$("rows").innerHTML=data.map(c=>`<tr><td><b>${e(c.id)}</b><br>${new Date(c.created_at).toLocaleString("id-ID")}</td><td><b>${e(c.name)}</b><br>${e(c.whatsapp)}<br><a href="https://wa.me/${e(c.whatsapp)}" target="_blank">Balas WA</a></td><td><b>${e(c.product)}</b><br>${e(c.problem)}</td><td><select id="s-${c.id}"><option ${c.status==="Menunggu"?"selected":""}>Menunggu</option><option ${c.status==="Diproses"?"selected":""}>Diproses</option><option ${c.status==="Selesai"?"selected":""}>Selesai</option><option ${c.status==="Ditolak"?"selected":""}>Ditolak</option></select><textarea id="n-${c.id}" placeholder="Keterangan admin">${e(c.admin_note||"")}</textarea></td><td><button onclick="save('${c.id}')">Simpan</button><br><br><button class="danger" onclick="removeC('${c.id}')">Hapus</button></td></tr>`).join("")}async function save(id){await api("/api/admin/claims/"+encodeURIComponent(id),{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({status:$("s-"+id).value,adminNote:$("n-"+id).value})});alert("Tersimpan");load()}async function removeC(id){if(confirm("Hapus "+id+"?")){await api("/api/admin/claims/"+encodeURIComponent(id),{method:"DELETE"});load()}}function csv(){const h=["ID","Nama","WA","Produk","Status","Catatan","Dibuat"],rows=data.map(c=>[c.id,c.name,c.whatsapp,c.product,c.status,c.admin_note,c.created_at]),s=[h,...rows].map(r=>r.map(v=>`"${String(v||"").replace(/"/g,'""')}"`).join(",")).join("\n"),a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\ufeff"+s],{type:"text/csv"}));a.download="garansi-juastore.csv";a.click()}function e(v){return String(v||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c])}function deb(f,t){let x;return()=>{clearTimeout(x);x=setTimeout(f,t)}};</script></body></html>
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin Garansi JuaStore</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="wrap">
+  <nav class="nav">
+    <a href="index.html">Form Garansi</a>
+    <a href="cek.html">Cek Status</a>
+    <a href="admin.html">Admin</a>
+  </nav>
+
+  <section id="loginCard" class="card">
+    <h1>Login Admin</h1>
+    <form id="loginForm" class="grid two">
+      <input id="adminKeyInput" type="password" placeholder="Masukkan ADMIN_KEY" required>
+      <button type="submit">Masuk</button>
+    </form>
+    <div id="loginMessage" class="message"></div>
+  </section>
+
+  <section id="dashboard" class="hidden">
+    <div class="card">
+      <div class="grid two">
+        <div>
+          <h1>Dashboard Garansi</h1>
+          <p class="muted">Kelola seluruh pengajuan pelanggan.</p>
+        </div>
+        <button id="logoutBtn" class="secondary">Keluar</button>
+      </div>
+
+      <div id="stats" class="stats"></div>
+
+      <div class="grid two">
+        <input id="searchInput" placeholder="Cari ID, nama, WA, produk...">
+        <select id="statusFilter">
+          <option value="">Semua status</option>
+          <option>Menunggu</option>
+          <option>Diproses</option>
+          <option>Selesai</option>
+          <option>Ditolak</option>
+        </select>
+      </div>
+
+      <div style="margin:12px 0" class="grid two">
+        <button id="refreshBtn">Muat Ulang</button>
+        <button id="exportBtn" class="secondary">Export CSV</button>
+      </div>
+
+      <div id="adminMessage" class="message"></div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th><th>Pelanggan</th><th>Produk</th><th>Kendala</th>
+              <th>Status</th><th>Tanggal</th><th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="claimsBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+const API = "https://garansi.jhonyoga01.workers.dev";
+let adminKey = sessionStorage.getItem("juastore_admin_key") || "";
+let claims = [];
+
+const loginCard = document.getElementById("loginCard");
+const dashboard = document.getElementById("dashboard");
+const loginMessage = document.getElementById("loginMessage");
+const adminMessage = document.getElementById("adminMessage");
+
+document.getElementById("loginForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  adminKey = document.getElementById("adminKeyInput").value.trim();
+  try {
+    await api("/api/admin/stats");
+    sessionStorage.setItem("juastore_admin_key", adminKey);
+    showDashboard();
+  } catch (error) {
+    loginMessage.textContent = error.message;
+    loginMessage.className = "message bad";
+  }
+});
+
+document.getElementById("logoutBtn").onclick = () => {
+  sessionStorage.removeItem("juastore_admin_key");
+  location.reload();
+};
+
+document.getElementById("refreshBtn").onclick = loadAll;
+document.getElementById("exportBtn").onclick = exportCsv;
+document.getElementById("searchInput").addEventListener("input", debounce(loadClaims, 300));
+document.getElementById("statusFilter").addEventListener("change", loadClaims);
+
+async function api(path, options = {}) {
+  const response = await fetch(API + path, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${adminKey}`,
+      ...(options.headers || {})
+    }
+  });
+
+  const result = await response.json().catch(() => ({
+    success: false,
+    message: `Respons server tidak valid (${response.status}).`
+  }));
+
+  if (!response.ok || !result.success) {
+    throw new Error(result.message || "Permintaan gagal.");
+  }
+
+  return result;
+}
+
+async function showDashboard() {
+  loginCard.classList.add("hidden");
+  dashboard.classList.remove("hidden");
+  await loadAll();
+}
+
+async function loadAll() {
+  adminMessage.className = "message";
+  try {
+    await Promise.all([loadStats(), loadClaims()]);
+  } catch (error) {
+    adminMessage.textContent = error.message;
+    adminMessage.className = "message bad";
+  }
+}
+
+async function loadStats() {
+  const { data } = await api("/api/admin/stats");
+  const items = [
+    ["Total", data.total], ["Hari ini", data.hari_ini],
+    ["Menunggu", data.menunggu], ["Diproses", data.diproses],
+    ["Selesai", data.selesai], ["Ditolak", data.ditolak]
+  ];
+  document.getElementById("stats").innerHTML = items
+    .map(([label, value]) => `<div class="stat"><span>${label}</span><b>${value}</b></div>`)
+    .join("");
+}
+
+async function loadClaims() {
+  const q = document.getElementById("searchInput").value.trim();
+  const status = document.getElementById("statusFilter").value;
+  const params = new URLSearchParams();
+  if (q) params.set("q", q);
+  if (status) params.set("status", status);
+
+  const { data } = await api(`/api/admin/claims?${params}`);
+  claims = data;
+  renderClaims();
+}
+
+function renderClaims() {
+  const body = document.getElementById("claimsBody");
+  if (!claims.length) {
+    body.innerHTML = `<tr><td colspan="7">Belum ada data.</td></tr>`;
+    return;
+  }
+
+  body.innerHTML = claims.map(item => `
+    <tr>
+      <td><b>${escapeHtml(item.id)}</b><br><small>${escapeHtml(item.order_id || "-")}</small></td>
+      <td>${escapeHtml(item.name)}<br>
+        <a href="https://wa.me/${escapeHtml(item.whatsapp)}" target="_blank">${escapeHtml(item.whatsapp)}</a><br>
+        <small>${escapeHtml(item.account || "-")}</small>
+      </td>
+      <td>${escapeHtml(item.product)}<br><small>${escapeHtml(item.claim_type || "-")}</small></td>
+      <td>${escapeHtml(item.problem)}</td>
+      <td><span class="badge">${escapeHtml(item.status)}</span><br><small>${escapeHtml(item.admin_note || "-")}</small></td>
+      <td>${new Date(item.created_at).toLocaleString("id-ID")}</td>
+      <td>
+        <div class="actions">
+          <button onclick="editClaim('${item.id}')">Ubah</button>
+          <button class="secondary" onclick="removeClaim('${item.id}')">Hapus</button>
+        </div>
+      </td>
+    </tr>
+  `).join("");
+}
+
+async function editClaim(id) {
+  const item = claims.find(v => v.id === id);
+  if (!item) return;
+
+  const status = prompt("Status: Menunggu / Diproses / Selesai / Ditolak", item.status);
+  if (status === null) return;
+
+  const adminNote = prompt("Catatan admin", item.admin_note || "");
+  if (adminNote === null) return;
+
+  try {
+    await api(`/api/admin/claims/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status, adminNote })
+    });
+    await loadAll();
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+async function removeClaim(id) {
+  if (!confirm(`Hapus data ${id}?`)) return;
+  try {
+    await api(`/api/admin/claims/${encodeURIComponent(id)}`, { method: "DELETE" });
+    await loadAll();
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+function exportCsv() {
+  if (!claims.length) return alert("Tidak ada data.");
+
+  const headers = [
+    "ID","Nama","WhatsApp","Produk","Akun","ID Order","Tanggal Order",
+    "Durasi","Jenis","Kendala","Status","Catatan Admin","Dibuat","Diperbarui"
+  ];
+
+  const rows = claims.map(v => [
+    v.id,v.name,v.whatsapp,v.product,v.account,v.order_id,v.order_date,
+    v.duration,v.claim_type,v.problem,v.status,v.admin_note,v.created_at,v.updated_at
+  ]);
+
+  const csv = [headers, ...rows]
+    .map(row => row.map(value => `"${String(value ?? "").replaceAll('"','""')}"`).join(","))
+    .join("\n");
+
+  const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `juastore-garansi-${new Date().toISOString().slice(0,10)}.csv`;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+function debounce(fn, wait) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), wait);
+  };
+}
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  })[c]);
+}
+
+if (adminKey) showDashboard();
+</script>
+</body>
+</html>

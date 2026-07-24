@@ -1,1 +1,69 @@
-<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cek Status</title><link rel="stylesheet" href="style.css"></head><body><header><div class="wrap brand"><div class="logo">JS</div><div><h2 style="margin:0">Cek Status Garansi</h2></div><nav class="nav"><a href="index.html">Ajukan</a><a href="cek.html">Cek Status</a></nav></div></header><main class="wrap"><section class="card hero"><h2>🔎 Cek Status</h2><p>Masukkan ID garansi customer.</p></section><section class="card"><form id="f" class="toolbar"><div class="grow"><label>ID Garansi</label><input id="id" placeholder="GRN-260723-3989" required></div><button>Cek</button></form><div id="r" class="status"></div></section></main><script>const API="https://garansi.jhonyoga01.workers.dev",r=document.getElementById("r");document.getElementById("f").onsubmit=async e=>{e.preventDefault();r.className="status show info";r.textContent="Mengecek...";try{const id=document.getElementById("id").value.trim(),x=await fetch(API+"/api/status/"+encodeURIComponent(id)),j=await x.json();if(!x.ok||!j.success)throw Error(j.message);const d=j.data;r.className="status show success";r.innerHTML=`<h3>${d.id}</h3><p><b>Produk:</b> ${d.product}</p><p><b>Jenis:</b> ${d.claim_type}</p><p><b>Status:</b> ${d.status}</p><p><b>Keterangan:</b><br>${d.admin_note||"Belum ada keterangan."}</p>`}catch(e){r.className="status show error";r.textContent=e.message}};</script></body></html>
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Cek Status Garansi</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="wrap">
+  <nav class="nav">
+    <a href="index.html">Form Garansi</a>
+    <a href="cek.html">Cek Status</a>
+    <a href="admin.html">Admin</a>
+  </nav>
+
+  <section class="card">
+    <h1>Cek Status Garansi</h1>
+    <form id="statusForm" class="grid two">
+      <input id="warrantyId" placeholder="GRN-260724-12345" required>
+      <button type="submit">Cek Status</button>
+    </form>
+    <div id="message" class="message"></div>
+    <div id="result" class="card hidden" style="margin-top:14px"></div>
+  </section>
+</main>
+
+<script>
+const API = "https://garansi.jhonyoga01.workers.dev";
+const form = document.getElementById("statusForm");
+const message = document.getElementById("message");
+const resultBox = document.getElementById("result");
+
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  message.className = "message";
+  resultBox.classList.add("hidden");
+
+  try {
+    const id = document.getElementById("warrantyId").value.trim().toUpperCase();
+    const response = await fetch(`${API}/api/status/${encodeURIComponent(id)}`);
+    const result = await response.json();
+
+    if (!response.ok || !result.success) throw new Error(result.message);
+
+    const d = result.data;
+    resultBox.innerHTML = `
+      <h2>${d.id}</h2>
+      <p><b>Produk:</b> ${escapeHtml(d.product || "-")}</p>
+      <p><b>Jenis:</b> ${escapeHtml(d.claim_type || "-")}</p>
+      <p><b>Status:</b> <span class="badge">${escapeHtml(d.status || "-")}</span></p>
+      <p><b>Catatan admin:</b> ${escapeHtml(d.admin_note || "-")}</p>
+      <p><b>Diperbarui:</b> ${new Date(d.updated_at).toLocaleString("id-ID")}</p>
+    `;
+    resultBox.classList.remove("hidden");
+  } catch (error) {
+    message.textContent = error.message || "Data gagal dimuat.";
+    message.className = "message bad";
+  }
+});
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  })[c]);
+}
+</script>
+</body>
+</html>

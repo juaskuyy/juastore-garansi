@@ -1,55 +1,73 @@
-# JuaStore Garansi V2
+# JuaStore Garansi V3
 
-Fitur: database D1, dashboard admin, pencarian, status, catatan admin, cek status customer, export CSV, Telegram, screenshot, dan tombol WhatsApp.
+## Isi file
+- `worker.js` — Cloudflare Worker API
+- `schema.sql` — struktur database D1
+- `index.html` — form pengajuan
+- `cek.html` — cek status
+- `admin.html` — dashboard admin
+- `style.css` — tampilan
+- `wrangler.toml` — konfigurasi Worker
 
-## 1. Upload semua file ke repository GitHub
+## A. Buat Worker dari awal
 
-Timpa file versi lama dengan file paket ini.
+1. Masuk Cloudflare Dashboard.
+2. Buka **Workers & Pages**.
+3. Buat Worker baru bernama `garansi`.
+4. Hubungkan Worker ke repository GitHub.
+5. Pastikan file utama adalah `worker.js`.
+6. Deploy.
 
-## 2. Buat D1 Database
+## B. Buat database D1
 
-Cloudflare → Workers & Pages → D1 SQL Database → Create.
+1. Cloudflare → **Storage & Databases** → **D1 SQL Database**.
+2. Buat database bernama `juastore-garansi-db`.
+3. Buka tab Console.
+4. Salin seluruh isi `schema.sql`, lalu jalankan.
+5. Buka Worker → Settings → Bindings.
+6. Tambahkan D1 Database:
+   - Variable name: `DB`
+   - Database: `juastore-garansi-db`
 
-Nama:
+## C. Tambahkan Variables and Secrets
 
-`juastore-garansi-db`
+Pada Worker → Settings → Variables and Secrets:
 
-Salin Database ID.
+- `ADMIN_KEY` = password dashboard admin
+- `TELEGRAM_BOT_TOKEN` = token bot Telegram
+- `TELEGRAM_CHAT_ID` = chat ID penerima
+- `ALLOWED_ORIGIN` = `*` untuk tes awal
 
-## 3. Edit wrangler.toml
+Setelah berhasil, ubah `ALLOWED_ORIGIN` menjadi:
+`https://juastore.biz.id`
 
-Ganti:
+Tanpa garis miring `/` di belakang.
 
-`GANTI_DENGAN_DATABASE_ID_D1`
+## D. Pasang website
 
-dengan Database ID D1, lalu commit.
+Upload ke GitHub Pages:
+- `index.html`
+- `cek.html`
+- `admin.html`
+- `style.css`
 
-## 4. Jalankan database
+Ketiga file sudah memakai:
+`https://garansi.jhonyoga01.workers.dev`
 
-Buka D1 → Console → salin seluruh isi `schema.sql` → Execute.
+Jika nama Worker berbeda, cari URL tersebut dan ganti di ketiga file.
 
-## 5. Pasang binding
+## E. Tes
 
-Worker → Settings → Bindings → Add → D1 database:
+1. Buka:
+   `https://garansi.jhonyoga01.workers.dev`
 
-- Variable name: `DB`
-- Database: `juastore-garansi-db`
+   Harus tampil JSON API aktif.
 
-## 6. Variables and Secrets
+2. Kirim form dari `index.html`.
 
-- `TELEGRAM_BOT_TOKEN` = token baru BotFather
-- `TELEGRAM_CHAT_ID` = ID admin/grup
-- `ALLOWED_ORIGIN` = `https://juastore.biz.id`
-- `ADMIN_KEY` = password rahasia dashboard
+3. Buka `admin.html`, lalu login menggunakan nilai `ADMIN_KEY`.
 
-Deploy ulang.
+## Catatan keamanan
 
-## 7. Alamat
-
-- Form: `https://juastore.biz.id`
-- Cek status: `https://juastore.biz.id/cek.html`
-- Dashboard: `https://juastore.biz.id/admin.html`
-
-Login dashboard menggunakan nilai `ADMIN_KEY`.
-
-PENTING: revoke token Telegram lama karena pernah terlihat di screenshot.
+Jangan menaruh `ADMIN_KEY` atau token Telegram di file HTML.
+Semua rahasia hanya disimpan di Cloudflare Variables and Secrets.
